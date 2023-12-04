@@ -1,0 +1,10 @@
+__pycache__/
+database/additional-training-datasets/
+database/face-datasets/
+database/full-training-datasets/
+insightface/
+yolov5_face/
+static/feature/
+static/results/
+static/videos/
+requirements.txt
