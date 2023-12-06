@@ -1,4 +1,4 @@
-from utils_config import UtilsConfig as Config
+from utils_config import Config
 
 # pytorch
 import torch
@@ -80,16 +80,16 @@ def scale_coords_landmarks(img1_shape, coords, img0_shape, ratio_pad=None):
     coords[:, 9].clamp_(0, img0_shape[0])  # y5
     return coords
 
-def get_face(input_image):
+def get_face(input_image, config: Config):
     # Resize image
-    img = resize_image(input_image.copy(), Config.size_convert)
+    img = resize_image(input_image.copy(), config.size_convert)
 
     # Via yolov5-face
     with torch.no_grad():
         pred = model_detect(img[None, :])[0]
 
     # Apply NMS
-    det = non_max_suppression_face(pred, Config.conf_thres, Config.iou_thres)[0]
+    det = non_max_suppression_face(pred, config.conf_thres, config.iou_thres)[0]
     bboxs = np.int32(scale_coords(img.shape[1:], det[:, :4], input_image.shape).round().cpu().numpy())
     
     landmarks = np.int32(scale_coords_landmarks(img.shape[1:], det[:, 5:15], input_image.shape).round().cpu().numpy())    

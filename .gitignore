@@ -7,4 +7,5 @@ yolov5_face/
 static/feature/
 static/results/
 static/videos/
+static/images/
 requirements.txt
