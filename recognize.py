@@ -3,7 +3,7 @@ from utils_functions import *
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-from utils_config import Config
+from utils_config import Config, Colors, Fonts
 
 
 def recognition(face):
@@ -22,13 +22,56 @@ def recognition(face):
     return (name, score)    
 
 
+def recognize_frame(frame, config: Config):
+    bboxs, landmarks = get_face(frame, config)
+
+    if config.recognize:
+        faces = []
+        
+    for i in range(len(bboxs)):
+        x1, y1, x2, y2 = bboxs[i]
+        face_image = frame[y1:y2, x1:x2]
+
+        cv2.rectangle(frame, (x1, y1), (x2, y2), config.colors.background, config.fonts.thickness)
+
+        if config.show_landmarks:
+            for x in range(5):
+                point_x = int(landmarks[i][2 * x])
+                point_y = int(landmarks[i][2 * x + 1])
+                cv2.circle(frame, (point_x, point_y), 2, config.colors.landmarks[x], -1)
+
+        if config.recognize:
+            faces.append((face_image, bboxs[i]))
+
+    if config.recognize:
+        with ThreadPoolExecutor(16) as executor:
+            results = executor.map(recognition, faces)
+
+        for i, face in enumerate(results):
+            x1, y1, x2, y2 = bboxs[i]
+            name = face[0]
+            score = face[1]
+            t_size = (0, 0)
+            caption = ''
+
+            if name and score >= config.conf_score:
+                caption = f"{name.split('_')[0].upper()} {score:.2f}"
+                t_size = cv2.getTextSize(caption, config.fonts.capture, config.fonts.thickness, config.fonts.thickness)[0]
+
+            cv2.rectangle(frame, (x1, y1), (x1 + t_size[0], y1 + t_size[1]), config.colors.background, -1)
+            if caption:
+                cv2.putText(frame, caption, (x1, y1 + t_size[1]), config.fonts.capture, config.fonts.thickness, config.colors.caption, config.fonts.thickness) 
+    
+    return frame
+
+
 def recognize_video(config: Config):     
     if config.use_webcam:
         cap = cv2.VideoCapture(0)
     else:
         cap = cv2.VideoCapture(config.video_source_path)
     
-    if config.record_video: 
+    if config.save_video: 
         frame_width = int(cap.get(3))
         frame_height = int(cap.get(4))
         size = (frame_width, frame_height)
@@ -49,9 +92,9 @@ def recognize_video(config: Config):
     
             if fps > 0:
                 fps_label = "FPS: %.2f" % fps
-                cv2.putText(frame, fps_label, (5, 30), config.Fonts.fps, 1, config.Colors.fps, 2)
+                cv2.putText(frame, fps_label, (5, 30), config.fonts.fps, 1, config.colors.fps, 2)
         
-        if config.record_video:
+        if config.save_video:
             video.write(frame)
 
         cv2.imshow("Face Recognition", frame)
@@ -60,15 +103,13 @@ def recognize_video(config: Config):
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break  
     
-    if config.record_video:
+    if config.save_video:
         video.release()
     cap.release()
     cv2.destroyAllWindows()
-    cv2.waitKey(0)
 
 
 def recognize_image(config: Config):
-    print(config.save_image_path)
     image = cv2.imread(config.image_source_path)
     image = recognize_frame(image, config)
 
@@ -76,53 +117,33 @@ def recognize_image(config: Config):
     cv2.waitKey(0) 
     cv2.destroyAllWindows() 
 
-    cv2.imwrite(config.save_image_path, image)
-
-
-def recognize_frame(frame, config: Config):
-    bboxs, landmarks = get_face(frame, config)
-
-    if config.recognize:
-        faces = []
-        
-    for i in range(len(bboxs)):
-        x1, y1, x2, y2 = bboxs[i]
-        face_image = frame[y1:y2, x1:x2]
-
-        cv2.rectangle(frame, (x1, y1), (x2, y2), config.Colors.background, config.Fonts.thickness)
-
-        if config.show_landmarks:
-            for x in range(5):
-                point_x = int(landmarks[i][2 * x])
-                point_y = int(landmarks[i][2 * x + 1])
-                cv2.circle(frame, (point_x, point_y), 2, config.Colors.landmarks[x], -1)
-
-        if config.recognize:
-            faces.append((face_image, bboxs[i]))
-
-    if config.recognize:
-        with ThreadPoolExecutor(16) as executor:
-            results = executor.map(recognition, faces)
-
-        for i, face in enumerate(results):
-            x1, y1, x2, y2 = bboxs[i]
-            name = face[0]
-            score = face[1]
-            t_size = (0, 0)
-            caption = ''
-
-            if name and score >= 0.5:
-                caption = f"{name.split('_')[0].upper()} {score:.2f}"
-                t_size = cv2.getTextSize(caption, config.Fonts.capture, config.Fonts.thickness, config.Fonts.thickness)[0]
-
-            cv2.rectangle(frame, (x1, y1), (x1 + t_size[0], y1 + t_size[1]), config.Colors.background, -1)
-            if caption:
-                cv2.putText(frame, caption, (x1, y1 + t_size[1]), config.Fonts.capture, config.Fonts.thickness, config.Colors.caption, config.Fonts.thickness) 
-    
-    return frame
+    if config.save_image:
+        cv2.imwrite(config.save_image_path, image)
     
 
 if __name__=="__main__":
-    config = Config(video_source_name='oscar2023', image_source_name='rock')
-    # recognize_video(config)
+    colors = Colors(
+        background=(0,255,255)
+        )
+    fonts = Fonts(
+        thickness=1
+    )
+    config = Config(
+        colors=colors,
+        fonts=fonts,
+        video_source_name='oscar2023', 
+        save_video=True,
+        post_fps=12,
+        count_fps=True,
+        use_webcam=False,
+        image_source_name='rock',
+        save_image=True,
+        size_convert=512,
+        conf_thres=0.6,
+        iou_thres=0.01,
+        show_landmarks=False,
+        recognize=True,
+        conf_score=0.5,
+    )
+    recognize_video(config=config)
     recognize_image(config=config)
