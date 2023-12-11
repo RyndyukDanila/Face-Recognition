@@ -20,7 +20,7 @@ class Config():
             conf_thres = 0.6,
             iou_thres = 0.01,
             conf_score = 0.5
-            ):
+            ) -> None:
         
         self.colors = colors
         self.fonts = fonts
@@ -58,7 +58,7 @@ class Fonts():
             capture = cv2.FONT_HERSHEY_PLAIN, 
             fps = cv2.FONT_HERSHEY_SIMPLEX, 
             thickness = 1
-            ):
+            ) -> None:
         self.capture = capture
         self.fps = fps
         self.thickness = thickness
@@ -69,7 +69,7 @@ class Colors():
     def __init__(
             self,
             background = (55,255,55)
-            ):
+            ) -> None:
         self.black = [0,0,0]
         self.white = (255,255,255)
         self.red = (0,0,255)

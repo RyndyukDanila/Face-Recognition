@@ -35,7 +35,7 @@ face_preprocess = transforms.Compose([
                                     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
                                     ])
 
-def resize_image(img0, img_size):
+def resize_image(img0, img_size) -> torch.Tensor:
     h0, w0 = img0.shape[:2]  # orig hw
     r = img_size / max(h0, w0)  # resize image to img_size
 

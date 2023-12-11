@@ -11,7 +11,7 @@ def train(
         faces_save_dir, 
         features_save_dir, 
         is_add_user
-        ):
+        ) -> None:
     
     # Init results output
     images_name = []
@@ -93,7 +93,7 @@ def train(
             dir_to_move = os.path.join(additional_training_dir, sub_dir)
             shutil.move(dir_to_move, full_training_dir, copy_function = shutil.copytree)
     
-def parse_opt():
+def parse_opt() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--full-training-dir', type=str, default='./database/full-training-datasets/', help='dir folder full training')
     parser.add_argument('--additional-training-dir', type=str, default='./database/additional-training-datasets/', help='dir folder additional training')
@@ -101,14 +101,14 @@ def parse_opt():
     parser.add_argument('--features-save-dir', type=str, default='./static/feature/face_features', help='dir folder save face features')
     parser.add_argument('--is-add-user', type=bool, default=True, help='Mode add user or full training')
     
-    opt = parser.parse_args()
+    opt: argparse.Namespace = parser.parse_args()
     return opt
 
-def main(opt):
+def main(opt) -> None:
     train(**vars(opt))
 
 if __name__ == "__main__":
-    opt = parse_opt()
+    opt: argparse.Namespace = parse_opt()
     main(opt)
 
     
